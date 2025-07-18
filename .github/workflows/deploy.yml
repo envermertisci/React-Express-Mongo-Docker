@@ -28,12 +28,13 @@ jobs:
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
           docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
-      - name: Build and push Docker images to ECR
+      - name: Build and push Docker images
         run: |
-          docker build -t ${{ secrets.ECR_REGISTRY }}/react-express-mongo-ui:latest ./frontend
-          docker build -t ${{ secrets.ECR_REGISTRY }}/react-express-mongo-api:latest ./backend
+          docker build -t ${{ secrets.ECR_REGISTRY }}/react-express-mongo-ui:latest ./ui
+          docker build -t ${{ secrets.ECR_REGISTRY }}/react-express-mongo-api:latest ./api
           docker push ${{ secrets.ECR_REGISTRY }}/react-express-mongo-ui:latest
           docker push ${{ secrets.ECR_REGISTRY }}/react-express-mongo-api:latest
+
 
       - name: Decode EC2 SSH key
         run: |
