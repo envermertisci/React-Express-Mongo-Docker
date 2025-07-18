@@ -21,20 +21,19 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: us-east-1
 
       - name: Login to Amazon ECR
         run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
-          docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+          aws ecr get-login-password --region us-east-1 | \
+          docker login --username AWS --password-stdin 764678966792.dkr.ecr.us-east-1.amazonaws.com
 
       - name: Build and push Docker images
         run: |
-          docker build -t ${{ secrets.ECR_REGISTRY }}/react-express-mongo-ui:latest ./ui
-          docker build -t ${{ secrets.ECR_REGISTRY }}/react-express-mongo-api:latest ./api
-          docker push ${{ secrets.ECR_REGISTRY }}/react-express-mongo-ui:latest
-          docker push ${{ secrets.ECR_REGISTRY }}/react-express-mongo-api:latest
-
+          docker build -t 764678966792.dkr.ecr.us-east-1.amazonaws.com/devops-task-ui:latest ./ui
+          docker build -t 764678966792.dkr.ecr.us-east-1.amazonaws.com/devops-task-api:latest ./api
+          docker push 764678966792.dkr.ecr.us-east-1.amazonaws.com/devops-task-ui:latest
+          docker push 764678966792.dkr.ecr.us-east-1.amazonaws.com/devops-task-api:latest
 
       - name: Decode EC2 SSH key
         run: |
@@ -44,11 +43,9 @@ jobs:
       - name: Deploy on EC2 instance
         run: |
           ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            docker pull ${{ secrets.ECR_REGISTRY }}/react-express-mongo-ui:latest
-            docker pull ${{ secrets.ECR_REGISTRY }}/react-express-mongo-api:latest
+            docker pull 764678966792.dkr.ecr.us-east-1.amazonaws.com/devops-task-ui:latest
+            docker pull 764678966792.dkr.ecr.us-east-1.amazonaws.com/devops-task-api:latest
             cd /home/ec2-user/app || mkdir -p /home/ec2-user/app && cd /home/ec2-user/app
-
-            # .env ve docker compose.yml varsayımı: EC2 tarafına manuel kopyalanmış olması lazım
             docker compose down
             docker compose up -d
           EOF
