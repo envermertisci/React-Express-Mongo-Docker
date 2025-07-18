@@ -1,0 +1,47 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+          docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+
+      - name: Build and push Docker images
+        run: |
+          docker-compose build
+          docker tag react-express-mongo-ui ${{ secrets.ECR_REGISTRY }}/react-express-mongo-ui:latest
+          docker tag react-express-mongo-api ${{ secrets.ECR_REGISTRY }}/react-express-mongo-api:latest
+          docker push ${{ secrets.ECR_REGISTRY }}/react-express-mongo-ui:latest
+          docker push ${{ secrets.ECR_REGISTRY }}/react-express-mongo-api:latest
+
+      - name: Decode SSH key
+        run: |
+          echo "${{ secrets.EC2_KEY }}" | base64 -d > key.pem
+          chmod 600 key.pem
+
+      - name: Deploy on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            docker pull ${{ secrets.ECR_REGISTRY }}/react-express-mongo-ui:latest
+            docker pull ${{ secrets.ECR_REGISTRY }}/react-express-mongo-api:latest
+            docker-compose up -d
+          EOF
