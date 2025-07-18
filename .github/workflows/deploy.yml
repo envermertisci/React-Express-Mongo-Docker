@@ -27,7 +27,7 @@ jobs:
 
       - name: Build and push Docker images
         run: |
-          docker-compose build
+          docker compose build
           docker tag react-express-mongo-ui ${{ secrets.ECR_REGISTRY }}/react-express-mongo-ui:latest
           docker tag react-express-mongo-api ${{ secrets.ECR_REGISTRY }}/react-express-mongo-api:latest
           docker push ${{ secrets.ECR_REGISTRY }}/react-express-mongo-ui:latest
@@ -43,5 +43,5 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             docker pull ${{ secrets.ECR_REGISTRY }}/react-express-mongo-ui:latest
             docker pull ${{ secrets.ECR_REGISTRY }}/react-express-mongo-api:latest
-            docker-compose up -d
+            docker compose up -d
           EOF
